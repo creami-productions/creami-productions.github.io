@@ -276,6 +276,33 @@ body {
   gap: 14px;
 }
 
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: var(--theme-switch-bg);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+
+.language-option {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.language-option.is-active {
+  background: var(--theme-active-bg);
+  color: var(--theme-active-text);
+}
+
 .theme-switch {
   display: inline-flex;
   align-items: center;
@@ -335,10 +362,15 @@ body {
     width: auto;
     align-items: center;
     flex-direction: row;
-    gap: 0;
+    gap: 8px;
   }
 
   .theme-option {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .language-option {
     padding: 7px 10px;
     font-size: 12px;
   }

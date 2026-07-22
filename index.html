@@ -19,9 +19,9 @@
       </a>
 
       <nav class="site-nav" aria-label="Primary navigation">
-        <button type="button" class="nav-button" data-scroll-target="about-section">Studio</button>
-        <button type="button" class="nav-button" data-scroll-target="projects-section">Projects</button>
-        <button type="button" class="nav-button" data-contact="true">Contact Us</button>
+        <button type="button" class="nav-button" data-scroll-target="about-section" data-i18n="nav.studio">Studio</button>
+        <button type="button" class="nav-button" data-scroll-target="projects-section" data-i18n="nav.projects">Projects</button>
+        <button type="button" class="nav-button" data-contact="true" data-i18n="nav.contact">Contact Us</button>
       </nav>
     </header>
 
@@ -29,9 +29,9 @@
       <section class="about-section" id="about-section" aria-label="About Creami Productions">
         <div class="about-layout">
           <div class="about-main">
-            <p class="about-kicker">Indie Studio</p>
-            <h1>About Creami Productions</h1>
-            <p>
+            <p class="about-kicker" data-i18n="about.kicker">Indie Studio</p>
+            <h1 data-i18n="about.title">About Creami Productions</h1>
+            <p data-i18n="about.description">
               We build compact action experiences with strong visual identity and tight controls.
             </p>
           </div>
@@ -44,15 +44,15 @@
 
       <section class="project-section" id="projects-section" aria-label="Projects">
         <div class="project-section-head">
-          <h2>Projects</h2>
+          <h2 data-i18n="projects.title">Projects</h2>
         </div>
 
         <figure class="project-media">
           <img src="Assets/Images/placeholder.jpg" alt="Yokai no Michi project art" />
           <figcaption>
-            <p class="project-kicker">Project</p>
+            <p class="project-kicker" data-i18n="projects.kicker">Project</p>
             <h3>Yōkai no Michi</h3>
-            <p class="project-genre">Rougelike RPG</p>
+            <p class="project-genre" data-i18n="projects.genre">Rougelike RPG</p>
           </figcaption>
         </figure>
       </section>
@@ -61,10 +61,14 @@
     <footer class="site-footer" aria-label="Main footer">
       <p class="footer-copy">© 2026 Creami Productions</p>
       <div class="footer-actions">
+        <div class="language-switch" role="group" aria-label="Language">
+          <button type="button" class="language-option" data-language-value="en">English</button>
+          <button type="button" class="language-option" data-language-value="de">Deutsch</button>
+        </div>
         <div class="theme-switch" role="group" aria-label="Color theme">
-          <button type="button" class="theme-option" data-theme-value="auto">Auto</button>
-          <button type="button" class="theme-option" data-theme-value="light">Light</button>
-          <button type="button" class="theme-option" data-theme-value="dark">Dark</button>
+          <button type="button" class="theme-option" data-theme-value="auto" data-i18n="theme.auto">Auto</button>
+          <button type="button" class="theme-option" data-theme-value="light" data-i18n="theme.light">Light</button>
+          <button type="button" class="theme-option" data-theme-value="dark" data-i18n="theme.dark">Dark</button>
         </div>
       </div>
     </footer>

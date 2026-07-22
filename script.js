@@ -1,11 +1,83 @@
 // Handles theme selection and header navigation actions.
 window.addEventListener("DOMContentLoaded", () => {
   const storageKey = "theme-preference";
+  const languageStorageKey = "language-preference";
   const root = document.documentElement;
   const logo = document.querySelector(".company-logo");
   const themeButtons = document.querySelectorAll(".theme-option");
+  const languageButtons = document.querySelectorAll(".language-option");
+  const translatableNodes = document.querySelectorAll("[data-i18n]");
   const systemPreference = window.matchMedia("(prefers-color-scheme: dark)");
   const navButtons = document.querySelectorAll(".nav-button");
+  const translations = {
+    en: {
+      "nav.studio": "Studio",
+      "nav.projects": "Projects",
+      "nav.contact": "Contact Us",
+      "about.kicker": "Indie Studio",
+      "about.title": "About Creami Productions",
+      "about.description": "We build compact action experiences with strong visual identity and tight controls.",
+      "projects.title": "Projects",
+      "projects.kicker": "Project",
+      "projects.genre": "Rougelike RPG",
+      "theme.auto": "Auto",
+      "theme.light": "Light",
+      "theme.dark": "Dark",
+    },
+    de: {
+      "nav.studio": "Studio",
+      "nav.projects": "Projekte",
+      "nav.contact": "Kontakt",
+      "about.kicker": "Indie-Studio",
+      "about.title": "Über Creami Productions",
+      "about.description": "Wir entwickeln kompakte Action-Erlebnisse mit starker visueller Identität und präziser Steuerung.",
+      "projects.title": "Projekte",
+      "projects.kicker": "Projekt",
+      "projects.genre": "Rougelike-RPG",
+      "theme.auto": "Auto",
+      "theme.light": "Hell",
+      "theme.dark": "Dunkel",
+    },
+  };
+
+  function getSystemLanguage() {
+    const systemLanguage = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+    return systemLanguage.startsWith("de") ? "de" : "en";
+  }
+
+  function getInitialLanguage() {
+    const stored = localStorage.getItem(languageStorageKey);
+    if (stored === "en" || stored === "de") {
+      return stored;
+    }
+
+    return getSystemLanguage();
+  }
+
+  function updateLanguageButtons(activeLanguage) {
+    languageButtons.forEach((button) => {
+      const isActive = button.dataset.languageValue === activeLanguage;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+  }
+
+  function applyLanguage(language) {
+    const activeLanguage = language === "de" ? "de" : "en";
+    const dictionary = translations[activeLanguage];
+
+    translatableNodes.forEach((node) => {
+      const key = node.dataset.i18n;
+      if (!key || !dictionary[key]) {
+        return;
+      }
+
+      node.textContent = dictionary[key];
+    });
+
+    root.setAttribute("lang", activeLanguage);
+    updateLanguageButtons(activeLanguage);
+  }
 
   function getResolvedTheme(preference) {
     if (preference === "auto") {
@@ -58,6 +130,9 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   let currentPreference = getInitialPreference();
+  let currentLanguage = getInitialLanguage();
+
+  applyLanguage(currentLanguage);
   applyTheme(currentPreference);
 
   themeButtons.forEach((button) => {
@@ -71,6 +146,20 @@ window.addEventListener("DOMContentLoaded", () => {
       currentPreference = nextPreference;
       localStorage.setItem(storageKey, currentPreference);
       applyTheme(currentPreference);
+    });
+  });
+
+  languageButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextLanguage = button.dataset.languageValue;
+
+      if (nextLanguage !== "en" && nextLanguage !== "de") {
+        return;
+      }
+
+      currentLanguage = nextLanguage;
+      localStorage.setItem(languageStorageKey, currentLanguage);
+      applyLanguage(currentLanguage);
     });
   });
 
