@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creami Productions</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" aria-label="Main header">
+      <a class="logo-link" href="index.html" aria-label="Go to homepage">
+        <img
+          class="company-logo"
+          src="Assets/Logo/Light/Creami Productions.002.png"
+          data-logo-light="Assets/Logo/Light/Creami Productions.002.png"
+          data-logo-dark="Assets/Logo/Dark/Creami Productions.002 2.png"
+          alt="Creami Productions"
+        />
+      </a>
+
+      <nav class="site-nav" aria-label="Primary navigation">
+        <button type="button" class="nav-button" data-scroll-target="about-section">Studio</button>
+        <button type="button" class="nav-button">Projects</button>
+        <button type="button" class="nav-button">Contact Us</button>
+      </nav>
+    </header>
+
+    <main class="page-content">
+      <section class="about-section" id="about-section" aria-label="About Creami Productions">
+        <div class="about-layout">
+          <div class="about-main">
+            <p class="about-kicker">Indie Studio</p>
+            <h1>About Creami Productions</h1>
+            <p>
+              We build compact action experiences with strong visual identity and
+              tight controls.
+            </p>
+          </div>
+
+          <figure class="about-media" aria-label="Studio artwork preview">
+            <img src="Assets/Images/dota_page_bg_raw.jpg" alt="Creami Productions game art preview" />
+          </figure>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" aria-label="Main footer">
+      <p class="footer-copy">© 2026 Creami Productions</p>
+      <div class="footer-actions">
+        <nav class="footer-nav" aria-label="Footer links">
+          <a href="index.html">Home</a>
+          <a href="#">Privacy</a>
+          <a href="#">Imprint</a>
+        </nav>
+
+        <div class="theme-switch" role="group" aria-label="Color theme">
+          <button type="button" class="theme-option" data-theme-value="auto">Auto</button>
+          <button type="button" class="theme-option" data-theme-value="light">Light</button>
+          <button type="button" class="theme-option" data-theme-value="dark">Dark</button>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
