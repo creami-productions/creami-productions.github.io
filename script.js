@@ -1,4 +1,4 @@
-// Navigation buttons are intentionally non-functional for now.
+// Handles theme selection and header navigation actions.
 window.addEventListener("DOMContentLoaded", () => {
   const storageKey = "theme-preference";
   const root = document.documentElement;
@@ -88,7 +88,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
   navButtons.forEach((button) => {
     button.addEventListener("click", (event) => {
+      const isContactButton = button.dataset.contact === "true";
       const targetId = button.dataset.scrollTarget;
+
+      if (isContactButton) {
+        event.preventDefault();
+        window.location.href = "mailto:hello@creamiproductions.com";
+        return;
+      }
 
       if (targetId) {
         event.preventDefault();
