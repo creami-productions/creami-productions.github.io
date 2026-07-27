@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yokai No Michi – Map Editor</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #17171c;
+      --panel: #24242c;
+      --panel-light: #30303a;
+      --text: #f2f2f2;
+      --muted: #a8a8b3;
+      --accent: #72b6ff;
+      --danger: #ff7373;
+      --cell-size: min(3.4vw, 34px);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font: 14px/1.4 system-ui, sans-serif;
+    }
+    button, select { font: inherit; }
+    button {
+      border: 1px solid #4b4b58;
+      border-radius: 5px;
+      background: var(--panel-light);
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px 11px;
+    }
+    button:hover { border-color: var(--accent); }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    aside { background: var(--panel); padding: 18px; border-right: 1px solid #3b3b45; }
+    main { padding: 22px; overflow: auto; }
+    h1, h2, p { margin-top: 0; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    h2 { font-size: 16px; margin-bottom: 10px; }
+    .muted { color: var(--muted); }
+    .section { border-top: 1px solid #3b3b45; margin-top: 18px; padding-top: 16px; }
+    .map-list { display: grid; gap: 6px; max-height: 48vh; overflow: auto; margin: 10px 0; }
+    .map-item { display: flex; gap: 5px; }
+    .map-item button:first-child { flex: 1; text-align: left; }
+    .map-item .active { border-color: var(--accent); background: #25415b; }
+    .toolbar, .difficulty-tabs, .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .toolbar { margin-bottom: 15px; }
+    .difficulty-tabs { margin-bottom: 18px; }
+    .difficulty-tabs button.active { background: var(--accent); color: #10151c; border-color: var(--accent); }
+    .editor-layout { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(20, var(--cell-size));
+      grid-template-rows: repeat(20, var(--cell-size));
+      gap: 1px;
+      background: #111116;
+      border: 2px solid #555562;
+      user-select: none;
+      touch-action: none;
+    }
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      background: #e3e3e7;
+      color: #17171c;
+      font-size: clamp(8px, 1.5vw, 15px);
+      font-weight: 700;
+      line-height: 1;
+    }
+    .cell.wall { background: #51515b; }
+    .cell.floor { background: #d8d8dc; }
+    .cell.enemy { background: #cf6868; color: #2a0e0e; }
+    .cell.powerup { background: #d4b963; color: #2c2308; }
+    .cell.entrance { outline: 3px solid #5be08c; outline-offset: -3px; }
+    .cell.exit { outline: 3px solid #72b6ff; outline-offset: -3px; }
+    .palette { display: grid; gap: 8px; min-width: 210px; }
+    .palette button { text-align: left; }
+    .palette button.active { border-color: var(--accent); background: #25415b; }
+    .legend { display: grid; grid-template-columns: 18px 1fr; gap: 7px 9px; align-items: center; color: var(--muted); }
+    .swatch { width: 18px; height: 18px; border: 1px solid #777; }
+    .swatch.wall { background: #51515b; }
+    .swatch.floor { background: #d8d8dc; }
+    .swatch.enemy { background: #cf6868; }
+    .swatch.powerup { background: #d4b963; }
+    .swatch.entrance { background: #d8d8dc; outline: 3px solid #5be08c; }
+    .swatch.exit { background: #d8d8dc; outline: 3px solid #72b6ff; }
+    .status { margin-top: 18px; padding: 11px; border-radius: 5px; background: var(--panel); color: var(--muted); }
+    .status.error { color: var(--danger); }
+    .counts { color: var(--muted); margin: 0 0 12px; }
+    .danger { color: var(--danger); }
+    @media (max-width: 800px) {
+      .app { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid #3b3b45; }
+      .map-list { max-height: 180px; }
+      :root { --cell-size: min(4.4vw, 30px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <h1>Map Editor</h1>
+      <p class="muted">20×20 Dungeon-Maps</p>
+
+      <div class="section">
+        <h2>Maps <span id="mapCount" class="muted"></span></h2>
+        <div class="actions">
+          <button id="addMapButton">Map hinzufügen</button>
+          <button id="duplicateMapButton">Duplizieren</button>
+          <button id="deleteMapButton">Löschen</button>
+        </div>
+        <div id="mapList" class="map-list"></div>
+      </div>
+
+      <div class="section">
+        <h2>Datei</h2>
+        <div class="actions">
+          <button id="exportButton">JSON exportieren</button>
+          <button id="importButton">JSON importieren</button>
+          <input id="importInput" type="file" accept=".json,application/json" hidden>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="toolbar">
+        <h2 id="mapTitle">Map 01</h2>
+        <span class="muted">Ein Klick bearbeitet genau eine Zelle</span>
+      </div>
+
+      <div id="difficultyTabs" class="difficulty-tabs"></div>
+
+      <div class="editor-layout">
+        <div>
+          <div id="grid" class="grid" aria-label="20 mal 20 Map-Raster"></div>
+          <div id="counts" class="counts"></div>
+          <div id="status" class="status">Bereit.</div>
+        </div>
+
+        <div class="palette">
+          <h2>Objekt auswählen</h2>
+          <button data-tool="wall">■ Wand</button>
+          <button data-tool="floor">□ Boden</button>
+          <button data-tool="enemy">◆ Gegner</button>
+          <button data-tool="powerup">✦ Powerup</button>
+          <button data-tool="entrance">▲ Eingang</button>
+          <button data-tool="exit">▼ Ausgang</button>
+          <div class="section">
+            <h2>Varianten</h2>
+            <p class="muted">Die Schwierigkeitsstufen teilen dieselbe Map-ID. Kopiere eine Variante als Ausgangspunkt und passe danach Gegner und Powerups an.</p>
+            <button id="copyPreviousButton">Vorherige Variante kopieren</button>
+          </div>
+          <div class="section legend">
+            <span class="swatch wall"></span><span>Wand</span>
+            <span class="swatch floor"></span><span>Boden</span>
+            <span class="swatch enemy"></span><span>Gegner</span>
+            <span class="swatch powerup"></span><span>Powerup</span>
+            <span class="swatch entrance"></span><span>Eingang</span>
+            <span class="swatch exit"></span><span>Ausgang</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    'use strict';
+
+    const SIZE = 20;
+    const MAX_MAPS = 64;
+    const DIFFICULTIES = [
+      { id: 'easy', label: '1 · Leicht' },
+      { id: 'normal', label: '2 · Normal' },
+      { id: 'hard', label: '3 · Schwer' },
+      { id: 'expert', label: '4 · Experte' },
+      { id: 'nightmare', label: '5 · Albtraum' }
+    ];
+    const TOOLS = ['wall', 'floor', 'enemy', 'powerup', 'entrance', 'exit'];
+    const SYMBOLS = { wall: '', floor: '', enemy: 'E', powerup: '+', entrance: 'I', exit: 'O' };
+    const STORAGE_KEY = 'yokai-no-michi-map-editor';
+
+    let maps = [];
+    let selectedMap = 0;
+    let selectedDifficulty = 0;
+    let selectedTool = 'wall';
+    const $ = (id) => document.getElementById(id);
+
+    function emptyGrid() {
+      return Array.from({ length: SIZE }, () => Array(SIZE).fill('wall'));
+    }
+
+    function createMap(id) {
+      return {
+        id,
+        name: `Map ${String(id).padStart(2, '0')}`,
+        variants: DIFFICULTIES.map((difficulty) => ({
+          difficulty: difficulty.id,
+          cells: emptyGrid()
+        }))
+      };
+    }
+
+    function currentVariant() {
+      return maps[selectedMap].variants[selectedDifficulty];
+    }
+
+    function saveLocal() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(maps));
+    }
+
+    function loadLocal() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (Array.isArray(stored) && stored.length > 0 && stored.length <= MAX_MAPS) {
+          maps = stored;
+          while (maps.length < MAX_MAPS) maps.push(createMap(maps.length + 1));
+          return;
+        }
+      } catch (error) {
+        console.warn('Gespeicherte Daten konnten nicht geladen werden.', error);
+      }
+      maps = Array.from({ length: MAX_MAPS }, (_, index) => createMap(index + 1));
+    }
+
+    function renderMapList() {
+      $('mapCount').textContent = `(${maps.length}/${MAX_MAPS})`;
+      $('mapList').replaceChildren();
+      maps.forEach((map, index) => {
+        const row = document.createElement('div');
+        row.className = 'map-item';
+        const button = document.createElement('button');
+        button.textContent = map.name;
+        button.classList.toggle('active', index === selectedMap);
+        button.addEventListener('click', () => {
+          selectedMap = index;
+          selectedDifficulty = 0;
+          render();
+        });
+        row.append(button);
+        $('mapList').append(row);
+      });
+      $('deleteMapButton').disabled = maps.length <= 1;
+      $('addMapButton').disabled = maps.length >= MAX_MAPS;
+    }
+
+    function renderDifficultyTabs() {
+      $('difficultyTabs').replaceChildren();
+      DIFFICULTIES.forEach((difficulty, index) => {
+        const button = document.createElement('button');
+        button.textContent = difficulty.label;
+        button.classList.toggle('active', index === selectedDifficulty);
+        button.addEventListener('click', () => {
+          selectedDifficulty = index;
+          render();
+        });
+        $('difficultyTabs').append(button);
+      });
+    }
+
+    function renderGrid() {
+      const grid = $('grid');
+      grid.replaceChildren();
+      currentVariant().cells.forEach((row, y) => row.forEach((type, x) => {
+        const cell = document.createElement('button');
+        cell.className = `cell ${type}`;
+        cell.title = `${x + 1}, ${y + 1}: ${type}`;
+        cell.textContent = SYMBOLS[type];
+        cell.addEventListener('click', (event) => {
+          event.preventDefault();
+          paintCell(x, y);
+        });
+        grid.append(cell);
+      }));
+    }
+
+    function renderCounts() {
+      const cells = currentVariant().cells.flat();
+      const count = (type) => cells.filter((cell) => cell === type).length;
+      const entrance = count('entrance');
+      const exit = count('exit');
+      $('counts').textContent = `Wand: ${count('wall')} · Boden: ${count('floor')} · Gegner: ${count('enemy')} · Powerups: ${count('powerup')} · Eingang: ${entrance}/1 · Ausgang: ${exit}/1`;
+      const warnings = [];
+      if (entrance !== 1) warnings.push('genau einen Eingang platzieren');
+      if (exit !== 1) warnings.push('genau einen Ausgang platzieren');
+      const variant = currentVariant();
+      if (selectedDifficulty > 0) {
+        const previous = maps[selectedMap].variants[selectedDifficulty - 1].cells.flat();
+        if (count('powerup') > previous.filter((cell) => cell === 'powerup').length) warnings.push('weniger Powerups als die vorherige Stufe verwenden');
+        if (count('enemy') < previous.filter((cell) => cell === 'enemy').length) warnings.push('mehr Gegner als die vorherige Stufe verwenden');
+      }
+      $('status').textContent = warnings.length ? `Hinweis: ${warnings.join('; ')}.` : `Variante ${DIFFICULTIES[selectedDifficulty].label} ist vollständig.`;
+      $('status').classList.toggle('error', warnings.length > 0);
+    }
+
+    function paintCell(x, y) {
+      const cells = currentVariant().cells;
+      if (selectedTool === 'entrance' || selectedTool === 'exit') {
+        for (let row = 0; row < SIZE; row++) {
+          for (let column = 0; column < SIZE; column++) {
+            if (cells[row][column] === selectedTool) cells[row][column] = 'floor';
+          }
+        }
+      }
+      cells[y][x] = selectedTool;
+      saveLocal();
+      renderGrid();
+      renderCounts();
+    }
+
+    function copyPreviousVariant() {
+      if (selectedDifficulty === 0) return;
+      const source = maps[selectedMap].variants[selectedDifficulty - 1].cells;
+      maps[selectedMap].variants[selectedDifficulty].cells = source.map((row) => [...row]);
+      saveLocal();
+      render();
+    }
+
+    function hasValidEntrances(map) {
+      return map.variants.every((variant) => {
+        const cells = variant.cells.flat();
+        return cells.filter((cell) => cell === 'entrance').length === 1 && cells.filter((cell) => cell === 'exit').length === 1;
+      });
+    }
+
+    function exportJson() {
+      const invalidMaps = maps.filter((map) => !hasValidEntrances(map));
+      if (invalidMaps.length > 0 && !window.confirm(`${invalidMaps.length} Map(s) haben nicht in jeder Variante genau einen Eingang und Ausgang. Trotzdem exportieren?`)) return;
+      const output = {
+        format: 'yokai_no_michi_maps',
+        version: 1,
+        grid_size: SIZE,
+        map_count: maps.length,
+        maps
+      };
+      const blob = new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'yokai_no_michi_maps.json';
+      link.click();
+      URL.revokeObjectURL(url);
+      $('status').textContent = 'JSON exportiert.';
+      $('status').classList.remove('error');
+    }
+
+    function importJson(file) {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (data.format !== 'yokai_no_michi_maps' || data.grid_size !== SIZE || !Array.isArray(data.maps) || data.maps.length > MAX_MAPS) throw new Error('Ungültiges Map-Format.');
+          maps = data.maps;
+          selectedMap = 0;
+          selectedDifficulty = 0;
+          saveLocal();
+          render();
+          $('status').textContent = 'JSON importiert.';
+        } catch (error) {
+          $('status').textContent = `Import fehlgeschlagen: ${error.message}`;
+          $('status').classList.add('error');
+        }
+      });
+      reader.readAsText(file);
+    }
+
+    function render() {
+      $('mapTitle').textContent = `${maps[selectedMap].name} · ${DIFFICULTIES[selectedDifficulty].label}`;
+      renderMapList();
+      renderDifficultyTabs();
+      renderGrid();
+      renderCounts();
+      document.querySelectorAll('[data-tool]').forEach((button) => button.classList.toggle('active', button.dataset.tool === selectedTool));
+    }
+
+    $('addMapButton').addEventListener('click', () => {
+      if (maps.length >= MAX_MAPS) return;
+      maps.push(createMap(maps.length + 1));
+      selectedMap = maps.length - 1;
+      selectedDifficulty = 0;
+      saveLocal();
+      render();
+    });
+    $('duplicateMapButton').addEventListener('click', () => {
+      if (maps.length >= MAX_MAPS) return;
+      const copy = JSON.parse(JSON.stringify(maps[selectedMap]));
+      copy.id = maps.length + 1;
+      copy.name = `Map ${String(copy.id).padStart(2, '0')}`;
+      maps.push(copy);
+      selectedMap = maps.length - 1;
+      saveLocal();
+      render();
+    });
+    $('deleteMapButton').addEventListener('click', () => {
+      if (maps.length <= 1) return;
+      maps.splice(selectedMap, 1);
+      selectedMap = Math.min(selectedMap, maps.length - 1);
+      saveLocal();
+      render();
+    });
+    $('copyPreviousButton').addEventListener('click', copyPreviousVariant);
+    $('exportButton').addEventListener('click', exportJson);
+    $('importButton').addEventListener('click', () => $('importInput').click());
+    $('importInput').addEventListener('change', (event) => {
+      if (event.target.files[0]) importJson(event.target.files[0]);
+      event.target.value = '';
+    });
+    document.querySelectorAll('[data-tool]').forEach((button) => button.addEventListener('click', () => {
+      selectedTool = button.dataset.tool;
+      render();
+    }));
+    loadLocal();
+    render();
+  </script>
+</body>
+</html>
